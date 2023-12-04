@@ -1,0 +1,64 @@
+import tkinter as tk
+from tkinter import ttk
+from core import Clock
+
+class Application:
+    def __init__(self, master):
+        self.master = master
+        self.init_ui()
+
+    def init_ui(self):
+        self.buttons = [
+            tk.Button(self.master, text="Venda", command=lambda: print("Botão Venda clicado"), font=("Arial", 22)),
+            tk.Button(self.master, text="Entrada", command=lambda: print("Botão Entrada clicado"), font=("Arial", 22)),
+            tk.Button(self.master, text="Estoque", command=lambda: print("Botão Estoque clicado"), font=("Arial", 22)),
+            tk.Button(self.master, text="Relatório", command=lambda: print("Botão Relatório clicado"), font=("Arial", 22)),
+            tk.Button(self.master, text="Logout", command=lambda: print("Botão Logout clicado"), font=("Arial", 22))
+        ]
+
+        self.clock_label = ttk.Label(self.master, text="", font=("Arial", 70))
+
+        self.display_home()
+
+        self.master.bind("<F11>", self.toggle_full_screen)
+        self.master.bind("<Configure>", self.on_resize)
+
+    def display_home(self):
+        for i in range(len(self.buttons)):
+            self.buttons[i].grid(row=i, column=4, pady=20, padx=600)
+
+        self.clock_label.grid(row=6, column=4, pady=200)
+
+        self.center_buttons()
+
+    def center_buttons(self):
+        window_width = self.master.winfo_width()
+        window_height = self.master.winfo_height()
+        frame = ttk.Frame(self.master)
+
+        frame_width = frame.winfo_width()
+        frame_height = frame.winfo_height()
+
+        horizontal_position = (window_width - frame_width) / 2
+        vertical_position = (window_height - frame_height) / 2
+
+        frame.place(x=horizontal_position, y=vertical_position)
+
+    def toggle_full_screen(self, event):
+        self.master.attributes("-fullscreen", not self.master.attributes("-fullscreen"))
+
+    def update_clock(self):
+        clock = Clock()
+        self.clock_label.config(text=clock.current_time)
+        self.clock_label.after(1000, self.update_clock)
+
+    def on_resize(self, event):
+        self.center_buttons()
+        self.update_clock()
+
+if __name__ == "__main__":
+    app = tk.Tk()
+    app.title("Adega Olaria System")
+    Application(app)
+    app.geometry("1280x720")
+    app.mainloop()
