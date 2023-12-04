@@ -9,5 +9,5 @@
 *.log.*
 *.sig
 
+venv/
 pkg/
-src/
