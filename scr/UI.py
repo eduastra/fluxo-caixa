@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
-from core import Clock
+from datetime import datetime
+from login import Logger
+
 
 class Application:
     def __init__(self, master):
@@ -9,7 +11,7 @@ class Application:
 
     def init_ui(self):
         self.buttons = [
-            tk.Button(self.master, text="Venda", command=lambda: print("Botão Venda clicado"), font=("Arial", 22)),
+            tk.Button(self.master, text="Venda", command=lambda: print(Logger.last_logged_in_user), font=("Arial", 22)),
             tk.Button(self.master, text="Entrada", command=lambda: print("Botão Entrada clicado"), font=("Arial", 22)),
             tk.Button(self.master, text="Estoque", command=lambda: print("Botão Estoque clicado"), font=("Arial", 22)),
             tk.Button(self.master, text="Relatório", command=lambda: print("Botão Relatório clicado"), font=("Arial", 22)),
@@ -21,13 +23,15 @@ class Application:
         self.display_home()
 
         self.master.bind("<F11>", self.toggle_full_screen)
-        self.master.bind("<Configure>", self.on_resize)
+        
+        # Adicione esta linha para iniciar o relógio
+        self.update_clock()
 
     def display_home(self):
         for i in range(len(self.buttons)):
             self.buttons[i].grid(row=i, column=4, pady=20, padx=600)
 
-        self.clock_label.grid(row=6, column=4, pady=200)
+        self.clock_label.grid(row=6, column=4, pady=50)
 
         self.center_buttons()
 
@@ -48,17 +52,10 @@ class Application:
         self.master.attributes("-fullscreen", not self.master.attributes("-fullscreen"))
 
     def update_clock(self):
-        clock = Clock()
-        self.clock_label.config(text=clock.current_time)
+        current_time = datetime.now().strftime("%H:%M:%S")
+        self.clock_label.config(text=current_time)
         self.clock_label.after(1000, self.update_clock)
 
     def on_resize(self, event):
         self.center_buttons()
         self.update_clock()
-
-if __name__ == "__main__":
-    app = tk.Tk()
-    app.title("Adega Olaria System")
-    Application(app)
-    app.geometry("1280x720")
-    app.mainloop()
