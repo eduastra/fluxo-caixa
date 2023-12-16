@@ -297,13 +297,32 @@ class Application:
         price_label = tk.Label(update_item_window, text="Novo preço:", font=("Arial", 14))
         price_entry = tk.Entry(update_item_window, font=("Arial", 14))
 
-        update_item_button = tk.Button(update_item_window, text="Alterar item", command=lambda: self.change_item(item_combobox.get(), price_entry.get()), font=("Arial", 14))
+        update_item_button = tk.Button(update_item_window, text="Alterar item", 
+                                    command=lambda: self.change_item(item_combobox.get(), price_entry.get()), 
+                                    font=("Arial", 14))
 
         item_label.grid(row=0, column=0) # Posicione a label corretamente
         item_combobox.grid(row=0, column=1) # Posicione o combobox corretamente
         price_label.grid(row=1, column=0)
         price_entry.grid(row=1, column=1)
         update_item_button.grid(row=2, column=0, columnspan=2)
+        
+
+    def change_item(self, item, new_price):
+        item = str(item).replace("{","").replace("}","")
+        print(item)
+        # Conexão com o banco de dados SQLite
+        connection = sqlite3.connect("warehouse.db")
+        cursor = connection.cursor()
+
+        # Executa o comando UPDATE para alterar o preço do item
+        cursor.execute("UPDATE pricing SET price = ? WHERE item = ?", (new_price, item))
+
+        # Fecha a conexão com o banco de dados
+        connection.commit()
+        connection.close()
+        messagebox.showinfo("Sucesso", "Logado com sucesso! Bem vindo")
+        self.update_item_window.destroy()
 
 
     def logout(self):
