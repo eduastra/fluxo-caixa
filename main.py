@@ -7,19 +7,58 @@ import sqlite3
 
 user = None
 
+now = datetime.now()
+date_time = now.strftime("%d/%m/%Y %H:%M:%S")
+
+def get_items():
+        # Criar conexão com o banco de dados
+        conn = sqlite3.connect('warehouse.db')
+
+        # Criar cursor para executar comandos SQL
+        cursor = conn.cursor()
+
+        # Executar consulta SQL para obter todos os itens da tabela pricing
+        cursor.execute("SELECT item FROM pricing")
+
+        # Obter todos os itens como uma tupla e armazenar na variável items
+        items = cursor.fetchall()
+
+        # Fechar a conexão com o banco de dados
+        conn.close()
+
+        return items
+
+
+def connect_db():
+    conn = sqlite3.connect('warehouse.db')
+    cursor = conn.cursor()
+    return conn, cursor
+
+def insert_sale_into_db(item, quantity, payment_method, user):
+    conn, cursor = connect_db()
+    
+    cursor.execute("""
+    INSERT INTO sales (item, quantity, payment_method, date, user)
+    VALUES (?, ?, ?, ?, ?)
+    """, (item, quantity, payment_method, date_time, user))
+    
+    conn.commit()
+    conn.close()
+
 
 class Application:
     def __init__(self, master):
         self.master = master
         self.init_ui()
         self.update_clock_id = None
-    
+        self.get_items = get_items()
+
 
     def init_ui(self):
         self.buttons = [
             tk.Button(self.master, text="Venda", command=self.sell_window, font=("Arial", 22)),
             tk.Button(self.master, text="Entrada", command=self.entry_window, font=("Arial", 22)),
-            tk.Button(self.master, text="Cadastrar novo item", command=self.open_item_window, font=("Arial", 22)),
+            tk.Button(self.master, text="Cadastrar novo item", command=self.register_item, font=("Arial", 22)),
             tk.Button(self.master, text="Relatório", command=lambda: print("Botão Relatório clicado"), font=("Arial", 22)),
             tk.Button(self.master, text="Logout", command=self.logout, font=("Arial", 22))
         ]
@@ -71,39 +110,60 @@ class Application:
         sell_window = tk.Toplevel(self.master)
         sell_window.title("Venda")
 
+
+        # Adicione os elementos de entrada necessários
+        conn = sqlite3.connect('warehouse.db')
+        cursor = conn.cursor()
+
+        
         # Adicione os elementos de entrada necessários
         item_label = ttk.Label(sell_window, text="Item:")
-        item_entry = ttk.Entry(sell_window)
+        item_combobox = ttk.Combobox(sell_window, state="readonly")
+        item_combobox["values"] = get_items()
+        item_combobox.grid(row=0, column=1)
+        
+
+        payment_method_label = ttk.Label(sell_window, text="Forma de pagamento:")
+        payment_method_var = tk.StringVar()
+        payment_method_combobox = ttk.Combobox(sell_window, textvariable=payment_method_var, state="readonly")
+        payment_method_combobox["values"] = ("Dinheiro", "PIX", "Crédito", "Débito")
+        payment_method_combobox.grid(row=2, column=1)
 
         quantity_label = ttk.Label(sell_window, text="Quantidade:")
         quantity_entry = ttk.Entry(sell_window)
 
-        payment_method_label = ttk.Label(sell_window, text="Forma de pagamento:")
-        payment_method_entry = ttk.Entry(sell_window)
-
+        
         # Adicione um botão para registrar a venda e fechar a janela
         def register_sale():
-            item = item_entry.get()
+            item = item_combobox.get()
             quantity = quantity_entry.get()
-            payment_method = payment_method_entry.get()
+            payment_method = payment_method_var.get()
+
 
             # Registre a venda no sistema (você pode precisar ajustar isso de acordo com a sua lógica atual)
             print(f"Venda registrada: {item}, {quantity}, {payment_method}")
 
+            insert_sale_into_db(item, quantity, payment_method, user)
+
+
+            conn.commit()
+            conn.close()
+
             # Feche a janela
             sell_window.destroy()
+
 
         register_sale_button = tk.Button(sell_window, text="Registrar venda", command=register_sale)
 
         # Posicione os elementos na janela
         item_label.grid(row=0, column=0)
-        item_entry.grid(row=0, column=1)
+        item_combobox.grid(row=0, column=1)
 
-        quantity_label.grid(row=1, column=0)
-        quantity_entry.grid(row=1, column=1)
+        payment_method_label.grid(row=1, column=0)
+        payment_method_combobox.grid(row=1, column=1)
 
-        payment_method_label.grid(row=2, column=0)
-        payment_method_entry.grid(row=2, column=1)
+        quantity_label.grid(row=2, column=0)
+        quantity_entry.grid(row=2, column=1)
 
         register_sale_button.grid(row=3, column=1)
 
@@ -113,15 +173,17 @@ class Application:
         entry_window.title("Entrada")
 
         # Adicione os elementos de entrada necessários
-        item_label = ttk.Label(entry_window, text="Item cadastrado:")
-        item_entry = ttk.Entry(entry_window)
+        item_label = ttk.Label(entry_window, text="Item:")
+        item_combobox = ttk.Combobox(entry_window, state="readonly")
+        item_combobox["values"] = get_items()
+        item_combobox.grid(row=0, column=1)
 
         quantity_label = ttk.Label(entry_window, text="Quantidade:")
         quantity_entry = ttk.Entry(entry_window)
 
         # Adicione um botão para registrar a entrada e fechar a janela
         def register_entry():
-            item = item_entry.get()
+            item = item_combobox.get()
             quantity = quantity_entry.get()
 
             # Conecte-se ao banco de dados (ou crie um novo se não existir)
@@ -148,14 +210,14 @@ class Application:
 
         # Posicione os elementos na janela
         item_label.grid(row=0, column=0)
-        item_entry.grid(row=0, column=1)
+        item_combobox.grid(row=0, column=1)
 
         quantity_label.grid(row=1, column=0)
         quantity_entry.grid(row=1, column=1)
 
         register_entry_button.grid(row=2, column=1)
 
-    def open_item_window(self):
+    def register_item(self):
         item_window = tk.Toplevel(self.master)
         item_window.title("Cadastrar novo item")
         item_window.geometry("400x200")
@@ -190,22 +252,59 @@ class Application:
         item_window.mainloop()
 
     def save_item(self, item_name, item_price, item_window):
+    # Verificar se os campos de nome e preço estão preenchidos
+        if item_name == "" or item_price == "":
+            messagebox.showerror("Erro", "Por favor, preencha todos os campos.")
+            return
+
         try:
             connection = sqlite3.connect("warehouse.db")
             cursor = connection.cursor()
-            cursor.execute("INSERT INTO pricing (name, price, date) VALUES (?, ?, ?)", (item_name, item_price, 'date'))
+
+            # Verificar se o item já existe
+            cursor.execute("SELECT * FROM pricing WHERE item = ?", (item_name,))
+            existing_item = cursor.fetchone()
+
+            if existing_item:
+                messagebox.showerror("Erro", "Item já existe no banco de dados.")
+                return
+
+            # Inserir o item no banco de dados
+            cursor.execute("INSERT INTO pricing (item, price) VALUES (?, ?)", (item_name, item_price))
+
+            # Salvar as alterações e fechar a conexão
             connection.commit()
             messagebox.showinfo("Sucesso", "Item salvo com sucesso")
+
         except Exception as e:
             messagebox.showerror("Erro", str(e))
+
         finally:
             connection.close()
             item_window.destroy()
 
 
     def update_item(self):
-        print("Alterando item existente...")
-    
+        update_item_window = tk.Toplevel(self.master)
+        update_item_window.title("Alterar item existente")
+        update_item_window.geometry("400x200")
+
+        # Adicione os widgets necessários à janela update_item_window
+        item_label = ttk.Label(update_item_window, text="Item:", font=("Arial", 14))
+        item_combobox = ttk.Combobox(update_item_window, state="readonly")
+        item_combobox["values"] = get_items()
+
+        price_label = tk.Label(update_item_window, text="Novo preço:", font=("Arial", 14))
+        price_entry = tk.Entry(update_item_window, font=("Arial", 14))
+
+        update_item_button = tk.Button(update_item_window, text="Alterar item", command=lambda: self.change_item(item_combobox.get(), price_entry.get()), font=("Arial", 14))
+
+        item_label.grid(row=0, column=0) # Posicione a label corretamente
+        item_combobox.grid(row=0, column=1) # Posicione o combobox corretamente
+        price_label.grid(row=1, column=0)
+        price_entry.grid(row=1, column=1)
+        update_item_button.grid(row=2, column=0, columnspan=2)
+
 
     def logout(self):
         global user
@@ -243,7 +342,7 @@ class Logger:
         user = login
         password = self.password_entry.get()
 
-        conn = sqlite3.connect('user_data.db')
+        conn = sqlite3.connect('warehouse.db')
         cursor = conn.cursor()
 
         try:

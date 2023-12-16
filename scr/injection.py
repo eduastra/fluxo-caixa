@@ -1,34 +1,11 @@
 import sqlite3
-
-conn = sqlite3.connect('user_data.db')
-cursor = conn.cursor()
-
-# Criar a tabela 'users' se ela não existir
-cursor.execute('''CREATE TABLE IF NOT EXISTS users
-                   (login TEXT PRIMARY KEY, password TEXT, age INTEGER)''')
-
-# Adicionar alguns dados de exemplo para a tabela 'users'
-cursor.execute("INSERT INTO users (login, password) VALUES (?, ?)",
-               ("", ""))
-
-# Salvar as alterações no banco de dados
-conn.commit()
-
-# Consultar e exibir os registros da tabela 'users'
-cursor.execute("SELECT * FROM users")
-rows = cursor.fetchall()
-
-for row in rows:
-    print(row)
-
-# Fechar a conexão com o banco dedos da
-conn.close()
+import datetime
 
 
-
-def connect_to_database():
+def itens():
     # Conecte-se ao banco de dados warehouse.db (ou crie um novo se não existir)
     connection = sqlite3.connect("warehouse.db")
+    data_atual = datetime.datetime.now().strftime('%Y-%m-%d')
 
     # Crie a tabela itens se ela ainda não existir
     cursor = connection.cursor()
@@ -40,7 +17,58 @@ def connect_to_database():
         data TEXT NOT NULL
     )
     """)
+    cursor.execute("""
+    INSERT INTO itens (id, item, quantidade, data)
+    VALUES (?, ?, ?, ?)
+    """, (1, 'whisky', 10, data_atual))
+    cursor.execute("""
+    INSERT INTO itens (id, item, quantidade, data)
+    VALUES (?, ?, ?, ?)
+    """, (2, 'vodka', 10, data_atual))
+    cursor.execute("""
+    INSERT INTO itens (id, item, quantidade, data)
+    VALUES (?, ?, ?, ?)
+    """, (3, 'whisky', 2, data_atual))
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS sales (
+        item TEXT NOT NULL,
+        quantity INTEGER NOT NULL,
+        payment_method TEXT NOT NULL,
+        date TEXT NOT NULL,
+        user TEXT NOT NULL
+    )
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS entries (
+        item TEXT NOT NULL,
+        quantity INTEGER NOT NULL,
+        date TEXT NOT NULL
+    )
+    """)
+
+
+        # Criar a tabela 'users' se ela não existir
+    cursor.execute('''CREATE TABLE IF NOT EXISTS users
+                    (login TEXT PRIMARY KEY, password TEXT, age INTEGER)''')
+
+    # Adicionar alguns dados de exemplo para a tabela 'users'
+    cursor.execute("INSERT INTO users (login, password) VALUES (?, ?)",
+                ("", ""))
+    
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS pricing (
+        item TEXT NOT NULL,
+        price FLOAT NOT NULL,
+        date TEXT
+    )
+    """)
+    
 
     # Faça commit das alterações e feche a conexão
     connection.commit()
     connection.close()
+
+
+itens()
+    
+print("foi")
